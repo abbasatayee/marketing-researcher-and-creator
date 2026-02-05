@@ -8,9 +8,12 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Vibseek Insights Dashboard
+          </h1>
           <p className="mt-1 text-sm text-zinc-500">
-            Track competitors, run a simple analysis, and export results.
+            See how Vibseek and your key competitors stack up, then turn those
+            insights into content and strategy.
           </p>
         </div>
         <div className="flex flex-wrap gap-2 no-print">
@@ -56,6 +59,34 @@ export default function DashboardPage() {
               or print to PDF.
             </li>
           </ol>
+        </Card>
+
+        <Card className="lg:col-span-3">
+          <CardTitle>About Vibseek</CardTitle>
+          <p className="mt-3 text-sm text-zinc-600">
+            Vibseek is an AI-powered sound discovery platform crafted for
+            electronic music producers. Instead of digging through endless
+            sample packs, you describe your track in plain English and Vibseek
+            finds human-made sounds from professional sound designers that fit
+            your vision.
+          </p>
+          <p className="mt-2 text-sm text-zinc-600">
+            Preview kicks, bass, percussion and more in sync with your
+            project&apos;s BPM and key, sketch out ideas on an interactive
+            board, and build your own custom sample packs. Pay only for the
+            sounds you actually use, keep them 100% royalty-free, and stay in
+            the creative flow while AI handles the search.
+          </p>
+          <p className="mt-3 text-sm">
+            <a
+              href="https://www.vibseek.com/"
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-blue-700 hover:underline"
+            >
+              Learn more at vibseek.com
+            </a>
+          </p>
         </Card>
       </div>
     </div>

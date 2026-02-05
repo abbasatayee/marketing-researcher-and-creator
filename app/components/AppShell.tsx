@@ -5,13 +5,7 @@ import { usePathname } from "next/navigation";
 import * as React from "react";
 import { useAppStore } from "../state/store";
 
-function NavItem({
-  href,
-  label,
-}: {
-  href: string;
-  label: string;
-}) {
+function NavItem({ href, label }: { href: string; label: string }) {
   const pathname = usePathname();
   const active = pathname === href;
   return (
@@ -19,9 +13,7 @@ function NavItem({
       href={href}
       className={[
         "block rounded-md px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500",
-        active
-          ? "bg-blue-50 text-blue-700"
-          : "text-zinc-700 hover:bg-zinc-100",
+        active ? "bg-blue-50 text-blue-700" : "text-zinc-700 hover:bg-zinc-100",
       ].join(" ")}
       aria-current={active ? "page" : undefined}
     >
@@ -41,15 +33,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="mx-auto flex min-h-screen max-w-7xl">
         <aside className="hidden w-72 flex-shrink-0 border-r border-zinc-200 bg-white px-6 py-8 md:block">
           <div className="mb-8">
-            <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-              Tool
+            <div className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+              Powered by Vibseek
             </div>
             <div className="mt-1 text-xl font-semibold tracking-tight text-zinc-900">
-              Competitor Analysis
+              Vibseek Insights
             </div>
             <p className="mt-1 text-sm text-zinc-500">
-              Simple dashboard, results, and exports.
+              Turn competitor research into content-ready insights for your
+              sound discovery brand.
             </p>
+            <a
+              href="https://www.vibseek.com/"
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 inline-flex items-center text-xs font-semibold text-blue-700 hover:underline"
+            >
+              Learn more about Vibseek
+            </a>
           </div>
 
           <nav className="space-y-1">
@@ -92,4 +93,3 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
-
