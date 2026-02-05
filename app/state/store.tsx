@@ -1,8 +1,17 @@
 "use client";
 
 import * as React from "react";
-import type { AnalysisParameters, AnalysisRun, AppState, Competitor } from "./types";
-import { DEFAULT_PARAMETERS, MOCK_COMPETITORS, makeMockAnalysis } from "./mockData";
+import type {
+  AnalysisParameters,
+  AnalysisRun,
+  AppState,
+  Competitor,
+} from "./types";
+import {
+  DEFAULT_PARAMETERS,
+  MOCK_COMPETITORS,
+  makeMockAnalysis,
+} from "./mockData";
 import { BACKEND_ENABLED } from "../lib/config";
 import { listCompetitors } from "../lib/api";
 import { mapApiCompetitorToStore } from "../lib/mappers";
@@ -11,7 +20,10 @@ type Action =
   | { type: "competitor/add"; payload: Omit<Competitor, "id"> }
   | { type: "competitor/bulkAdd"; payload: Omit<Competitor, "id">[] }
   | { type: "competitor/replaceAll"; payload: { items: Competitor[] } }
-  | { type: "competitor/update"; payload: { id: number; patch: Partial<Omit<Competitor, "id">> } }
+  | {
+      type: "competitor/update";
+      payload: { id: number; patch: Partial<Omit<Competitor, "id">> };
+    }
   | { type: "competitor/delete"; payload: { id: number } }
   | { type: "competitor/selectToggle"; payload: { id: number } }
   | { type: "competitor/selectAll"; payload: { ids: number[] } }
@@ -137,7 +149,10 @@ type AppStoreContextValue = AppState & {
   addCompetitor: (c: Omit<Competitor, "id">) => void;
   bulkAddCompetitors: (items: Omit<Competitor, "id">[]) => void;
   replaceCompetitors: (items: Competitor[]) => void;
-  updateCompetitorLocal: (id: number, patch: Partial<Omit<Competitor, "id">>) => void;
+  updateCompetitorLocal: (
+    id: number,
+    patch: Partial<Omit<Competitor, "id">>
+  ) => void;
   deleteCompetitorLocal: (id: number) => void;
   toggleSelectedCompetitor: (id: number) => void;
   selectAllCompetitors: (ids: number[]) => void;
@@ -170,6 +185,32 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (e) {
         console.error("Failed to auto-load competitors from backend", e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // When backend is disabled, hydrate competitors from the local JSON-backed API
+  React.useEffect(() => {
+    if (BACKEND_ENABLED) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/competitors");
+        if (!res.ok) return;
+        const data = (await res.json()) as { items?: any[] };
+        if (!cancelled && data.items && data.items.length) {
+          dispatch({
+            type: "competitor/replaceAll",
+            payload: {
+              items: data.items.map((c: any) => mapApiCompetitorToStore(c)),
+            },
+          });
+        }
+      } catch (e) {
+        console.error("Failed to load competitors from local API", e);
       }
     })();
     return () => {
@@ -230,4 +271,3 @@ export function useAppStore() {
 export function getDefaultParameters(): AnalysisParameters {
   return { ...DEFAULT_PARAMETERS };
 }
-
