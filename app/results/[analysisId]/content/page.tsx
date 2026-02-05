@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useAppStore } from "../../../state/store";
 import { useToast } from "../../../state/toast";
 import {
@@ -12,12 +13,9 @@ import {
   Textarea,
 } from "../../../components/ui";
 
-export default function ContentFromResultsPage({
-  params,
-}: {
-  params: { analysisId: string };
-}) {
-  const { analysisId } = params;
+export default function ContentFromResultsPage() {
+  const params = useParams();
+  const analysisId = params?.analysisId as string | undefined;
   const toast = useToast();
   const { analyses, competitors } = useAppStore();
 
@@ -32,6 +30,23 @@ export default function ContentFromResultsPage({
   const [loading, setLoading] = React.useState(false);
   const [responseText, setResponseText] = React.useState<string | null>(null);
   const [savedViewUrl, setSavedViewUrl] = React.useState<string | null>(null);
+
+  if (!analysisId) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Create marketing content
+        </h1>
+        <div className="rounded-md border border-dashed border-zinc-200 p-6 text-sm text-zinc-600">
+          Missing analysis ID in the URL. Go back to{" "}
+          <Link href="/" className="font-semibold text-blue-700 hover:underline">
+            Dashboard
+          </Link>{" "}
+          or run an analysis first.
+        </div>
+      </div>
+    );
+  }
 
   if (!analysis) {
     return (
@@ -100,61 +115,22 @@ export default function ContentFromResultsPage({
         }),
       });
 
-      const contentType = res.headers.get("content-type") ?? "";
       if (!res.ok) {
         const text = await res.text().catch(() => "");
         throw new Error(text || `Request failed with status ${res.status}`);
       }
 
-      let responseData: unknown;
-      if (contentType.includes("application/json")) {
-        responseData = await res.json();
-        setResponseText(JSON.stringify(responseData, null, 2));
-      } else {
-        const text = await res.text();
-        responseData = text;
-        setResponseText(text);
-      }
-
-      // If workflow returned a viewUrl (e.g. after posting to our store), show it
-      if (
-        responseData &&
-        typeof responseData === "object" &&
-        "viewUrl" in responseData &&
-        typeof (responseData as { viewUrl: string }).viewUrl === "string"
-      ) {
-        setSavedViewUrl((responseData as { viewUrl: string }).viewUrl);
-      } else {
-        // Optionally save this response to our store so user can open it later
-        try {
-          const storeRes = await fetch("/api/social-content", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              analysisId,
-              content: responseData,
-              source: "webhook_response",
-            }),
-          });
-          if (storeRes.ok) {
-            const { viewUrl } = (await storeRes.json()) as { viewUrl: string };
-            setSavedViewUrl(viewUrl);
-          }
-        } catch {
-          // ignore store failure
-        }
-      }
-
       toast.push({
         type: "success",
-        message:
-          "Content generated from analysis. You can refine or copy it below.",
+        message: "Content is being generated. Taking you to the view…",
       });
+      window.location.href = `/results/${analysisId}/content/waiting`;
+      return;
     } catch (e) {
       console.error("Failed to call social content webhook", e);
       toast.push({
         type: "error",
-        message: "Could not reach the content endpoint.",
+        message: "Could not start the content workflow.",
       });
     } finally {
       setLoading(false);

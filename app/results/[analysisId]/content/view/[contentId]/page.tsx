@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { Button, Card, CardTitle } from "../../../../../components/ui";
 
 type Stored = {
@@ -12,17 +13,20 @@ type Stored = {
   created_at: string;
 };
 
-export default function ViewContentPage({
-  params,
-}: {
-  params: { analysisId: string; contentId: string };
-}) {
-  const { analysisId, contentId } = params;
+export default function ViewContentPage() {
+  const params = useParams();
+  const analysisId = params?.analysisId as string | undefined;
+  const contentId = params?.contentId as string | undefined;
   const [item, setItem] = React.useState<Stored | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    if (!contentId) {
+      setLoading(false);
+      setError("Content ID is missing.");
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
@@ -44,6 +48,16 @@ export default function ViewContentPage({
     };
   }, [contentId]);
 
+  if (!analysisId || !contentId) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-2xl font-semibold tracking-tight">Content</h1>
+        <p className="text-sm text-zinc-600">Missing analysis or content ID in the URL.</p>
+        <Link href="/"><Button variant="secondary">Dashboard</Button></Link>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -58,9 +72,11 @@ export default function ViewContentPage({
       <div className="space-y-4">
         <h1 className="text-2xl font-semibold tracking-tight">Content</h1>
         <p className="text-sm text-zinc-600">{error ?? "Not found."}</p>
-        <Link href={`/results/${analysisId}/content`}>
-          <Button variant="secondary">Back to create content</Button>
-        </Link>
+        {analysisId && (
+          <Link href={`/results/${analysisId}/content`}>
+            <Button variant="secondary">Back to create content</Button>
+          </Link>
+        )}
       </div>
     );
   }

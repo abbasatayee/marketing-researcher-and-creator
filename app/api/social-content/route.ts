@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSocialContent } from "@/app/lib/social-content-store";
+import {
+  createSocialContent,
+  listByAnalysis,
+} from "@/app/lib/social-content-store";
 
 export const runtime = "nodejs";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Access-Control-Max-Age": "86400",
 };
@@ -18,6 +21,34 @@ export async function OPTIONS() {
     status: 204,
     headers: CORS_HEADERS,
   });
+}
+
+/**
+ * GET /api/social-content?analysisId=xxx
+ * Returns { items } for polling (e.g. waiting page).
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const analysisId = searchParams.get("analysisId");
+    if (!analysisId) {
+      return NextResponse.json(
+        { detail: "analysisId query is required" },
+        { status: 400 }
+      );
+    }
+    const items = await listByAnalysis(analysisId);
+    return NextResponse.json(
+      { items },
+      { headers: { "Content-Type": "application/json" } }
+    );
+  } catch (e) {
+    console.error("GET /api/social-content", e);
+    return NextResponse.json(
+      { detail: e instanceof Error ? e.message : "Internal error" },
+      { status: 500 }
+    );
+  }
 }
 
 /**

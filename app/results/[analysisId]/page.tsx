@@ -1,11 +1,10 @@
 import { ResultsView } from "./resultsView";
 
-export default function ResultsPage({
+export default async function ResultsPage({
   params,
 }: {
-  params: { analysisId: string };
+  params: Promise<{ analysisId: string }>;
 }) {
-  const { analysisId } = params;
+  const { analysisId } = await params;
   return <ResultsView analysisId={analysisId} />;
 }
-
