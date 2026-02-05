@@ -2,10 +2,10 @@ import { readFile, writeFile, mkdir } from "fs/promises";
 import path from "path";
 import os from "os";
 
-// Use OS temp directory so this works in serverless / read-only code dirs.
-// On most platforms (including AWS Lambda), this resolves to something like /tmp.
-const DATA_DIR = path.join(os.tmpdir(), "research-app-data");
-const FILE_PATH = path.join(DATA_DIR, "competitors.json");
+// Prefer a project-local `.data` folder in development,
+// but fall back to the OS temp directory on read-only/serverless filesystems.
+let DATA_DIR = path.join(process.cwd(), ".data");
+let FILE_PATH = path.join(DATA_DIR, "competitors.json");
 
 export type StoredCompetitor = {
   id: number;
@@ -25,7 +25,15 @@ export type StoredCompetitor = {
 };
 
 async function ensureDataDir() {
-  await mkdir(DATA_DIR, { recursive: true });
+  try {
+    await mkdir(DATA_DIR, { recursive: true });
+  } catch {
+    // If we can't write next to the code (e.g. /var/task on serverless),
+    // fall back to a writable temp directory.
+    DATA_DIR = path.join(os.tmpdir(), "research-app-data");
+    FILE_PATH = path.join(DATA_DIR, "competitors.json");
+    await mkdir(DATA_DIR, { recursive: true });
+  }
 }
 
 async function readCompetitors(): Promise<StoredCompetitor[]> {
