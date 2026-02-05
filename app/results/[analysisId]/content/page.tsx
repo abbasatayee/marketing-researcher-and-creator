@@ -31,6 +31,7 @@ export default function ContentFromResultsPage({
   ]);
   const [loading, setLoading] = React.useState(false);
   const [responseText, setResponseText] = React.useState<string | null>(null);
+  const [savedViewUrl, setSavedViewUrl] = React.useState<string | null>(null);
 
   if (!analysis) {
     return (
@@ -76,6 +77,7 @@ export default function ContentFromResultsPage({
     }
     setLoading(true);
     setResponseText(null);
+    setSavedViewUrl(null);
     try {
       const res = await fetch(
         "https://itsabbas-ataie.app.n8n.cloud/webhook/9ab24b1d-7785-43a3-9c20-907e18ba31c5",
@@ -97,7 +99,11 @@ export default function ContentFromResultsPage({
               name: c.name,
               website_url: c.website_url ?? null,
             })),
-            // You can later extend this to include full results + insights
+            contentStoreUrl:
+              typeof window !== "undefined"
+                ? `${window.location.origin}/api/social-content`
+                : "/api/social-content",
+            analysisIdForStore: analysisId,
           }),
         }
       );
@@ -108,12 +114,43 @@ export default function ContentFromResultsPage({
         throw new Error(text || `Request failed with status ${res.status}`);
       }
 
+      let responseData: unknown;
       if (contentType.includes("application/json")) {
-        const data = await res.json();
-        setResponseText(JSON.stringify(data, null, 2));
+        responseData = await res.json();
+        setResponseText(JSON.stringify(responseData, null, 2));
       } else {
         const text = await res.text();
+        responseData = text;
         setResponseText(text);
+      }
+
+      // If workflow returned a viewUrl (e.g. after posting to our store), show it
+      if (
+        responseData &&
+        typeof responseData === "object" &&
+        "viewUrl" in responseData &&
+        typeof (responseData as { viewUrl: string }).viewUrl === "string"
+      ) {
+        setSavedViewUrl((responseData as { viewUrl: string }).viewUrl);
+      } else {
+        // Optionally save this response to our store so user can open it later
+        try {
+          const storeRes = await fetch("/api/social-content", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              analysisId,
+              content: responseData,
+              source: "webhook_response",
+            }),
+          });
+          if (storeRes.ok) {
+            const { viewUrl } = (await storeRes.json()) as { viewUrl: string };
+            setSavedViewUrl(viewUrl);
+          }
+        } catch {
+          // ignore store failure
+        }
       }
 
       toast.push({
@@ -213,6 +250,69 @@ export default function ContentFromResultsPage({
           </div>
         </Card>
       </div>
+
+      <Card className="lg:col-span-3">
+        <CardTitle>URL to put the content (for your workflow)</CardTitle>
+        <p className="mt-2 text-sm text-zinc-500">
+          In n8n, after generating content, POST it to this endpoint. The
+          response will include a{" "}
+          <code className="rounded bg-zinc-100 px-1">viewUrl</code> to display
+          the content to the user.
+        </p>
+        <div className="mt-3 rounded-md border border-zinc-200 bg-zinc-50 p-3 font-mono text-xs text-zinc-800">
+          <div className="font-semibold text-zinc-600">
+            POST{" "}
+            {typeof window !== "undefined"
+              ? `${window.location.origin}/api/social-content`
+              : "[origin]/api/social-content"}
+          </div>
+          <div className="mt-2 text-zinc-700">
+            Body:{" "}
+            <code>{`{ "analysisId": "${analysisId}", "content": "…" }`}</code>
+          </div>
+          <div className="mt-2 text-zinc-600">
+            Response: <code>{`{ "id", "viewUrl", "createdAt" }`}</code> — open{" "}
+            <code>viewUrl</code> in the app to show the content.
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-zinc-500">
+          View URL pattern:{" "}
+          <code className="rounded bg-zinc-100 px-1">
+            /results/[analysisId]/content/view/[id]
+          </code>
+        </p>
+      </Card>
+
+      {savedViewUrl && (
+        <Card className="lg:col-span-3 border-blue-200 bg-blue-50/50">
+          <CardTitle>View saved content</CardTitle>
+          <p className="mt-2 text-sm text-zinc-600">
+            Content was saved. Open this link to display it later:
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <a
+              href={savedViewUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+            >
+              Open content
+            </a>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                void navigator.clipboard.writeText(savedViewUrl);
+                toast.push({ type: "success", message: "View URL copied" });
+              }}
+            >
+              Copy link
+            </Button>
+          </div>
+          <p className="mt-2 font-mono text-xs text-zinc-600 break-all">
+            {savedViewUrl}
+          </p>
+        </Card>
+      )}
 
       <Card className="lg:col-span-3">
         <div className="flex items-center justify-between">
