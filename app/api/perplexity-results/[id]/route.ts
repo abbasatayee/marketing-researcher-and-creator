@@ -19,10 +19,10 @@ function getFilePath(id: string) {
 
 export async function GET(
   _request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     await ensureDir();
     const filePath = getFilePath(id);
     const raw = await readFile(filePath, "utf-8");
@@ -45,10 +45,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = context.params;
+    const { id } = await context.params;
     await ensureDir();
 
     let body: unknown;
@@ -85,9 +85,8 @@ export async function PUT(
 
 export async function POST(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   // Treat POST the same as PUT for convenience
   return PUT(request, context);
 }
-
