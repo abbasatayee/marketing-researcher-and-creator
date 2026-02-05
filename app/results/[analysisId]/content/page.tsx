@@ -69,6 +69,53 @@ export default function ContentFromResultsPage() {
     );
   }
 
+  function copyBlock(text: string, label: string) {
+    void navigator.clipboard.writeText(text);
+    toast.push({ type: "success", message: `${label} copied` });
+  }
+
+  const payloadPrompt = prompt.trim() || "(empty)";
+  const payloadChannels = channels.join(", ");
+  const payloadAnalysis = analysis
+    ? JSON.stringify(
+        {
+          id: analysis.id,
+          name: analysis.name,
+          createdAt: analysis.createdAt,
+          parameters: analysis.parameters,
+        },
+        null,
+        2
+      )
+    : JSON.stringify(
+        {
+          id: analysisId,
+          name: "Analysis",
+          createdAt: new Date().toISOString(),
+          parameters: {
+            pricing: true,
+            features: true,
+            marketing: true,
+            audience: true,
+            techStack: true,
+            content: true,
+            social: true,
+            reviews: true,
+          },
+        },
+        null,
+        2
+      );
+  const payloadCompetitors = JSON.stringify(
+    selectedCompetitors.map((c) => ({
+      id: c.id,
+      name: c.name,
+      website_url: c.website_url ?? null,
+    })),
+    null,
+    2
+  );
+
   async function handleGenerate() {
     if (!prompt.trim()) {
       toast.push({
@@ -222,6 +269,71 @@ export default function ContentFromResultsPage() {
           </div>
         </Card>
       </div>
+
+      <Card className="lg:col-span-3">
+        <CardTitle>Request payload (copyable)</CardTitle>
+        <p className="mt-2 text-sm text-zinc-500">
+          What will be sent to the workflow. Copy each part separately.
+        </p>
+        <div className="mt-4 space-y-4">
+          <div className="rounded-md border border-zinc-200 bg-zinc-50/50">
+            <div className="flex items-center justify-between border-b border-zinc-200 bg-zinc-100/80 px-3 py-2">
+              <span className="text-xs font-medium text-zinc-600">Prompt / brief</span>
+              <Button
+                variant="ghost"
+                onClick={() => copyBlock(payloadPrompt, "Prompt")}
+              >
+                Copy
+              </Button>
+            </div>
+            <pre className="max-h-32 overflow-auto p-3 font-mono text-xs text-zinc-800 whitespace-pre-wrap wrap-break-word">
+              {payloadPrompt}
+            </pre>
+          </div>
+          <div className="rounded-md border border-zinc-200 bg-zinc-50/50">
+            <div className="flex items-center justify-between border-b border-zinc-200 bg-zinc-100/80 px-3 py-2">
+              <span className="text-xs font-medium text-zinc-600">Channels</span>
+              <Button
+                variant="ghost"
+                onClick={() => copyBlock(payloadChannels, "Channels")}
+              >
+                Copy
+              </Button>
+            </div>
+            <pre className="max-h-20 overflow-auto p-3 font-mono text-xs text-zinc-800">
+              {payloadChannels}
+            </pre>
+          </div>
+          <div className="rounded-md border border-zinc-200 bg-zinc-50/50">
+            <div className="flex items-center justify-between border-b border-zinc-200 bg-zinc-100/80 px-3 py-2">
+              <span className="text-xs font-medium text-zinc-600">Analysis</span>
+              <Button
+                variant="ghost"
+                onClick={() => copyBlock(payloadAnalysis, "Analysis")}
+              >
+                Copy
+              </Button>
+            </div>
+            <pre className="max-h-40 overflow-auto p-3 font-mono text-xs text-zinc-800 whitespace-pre">
+              {payloadAnalysis}
+            </pre>
+          </div>
+          <div className="rounded-md border border-zinc-200 bg-zinc-50/50">
+            <div className="flex items-center justify-between border-b border-zinc-200 bg-zinc-100/80 px-3 py-2">
+              <span className="text-xs font-medium text-zinc-600">Competitors</span>
+              <Button
+                variant="ghost"
+                onClick={() => copyBlock(payloadCompetitors, "Competitors")}
+              >
+                Copy
+              </Button>
+            </div>
+            <pre className="max-h-40 overflow-auto p-3 font-mono text-xs text-zinc-800 whitespace-pre">
+              {payloadCompetitors}
+            </pre>
+          </div>
+        </div>
+      </Card>
 
       <Card className="lg:col-span-3">
         <CardTitle>URL to put the content (for your workflow)</CardTitle>
