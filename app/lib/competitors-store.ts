@@ -1,7 +1,10 @@
 import { readFile, writeFile, mkdir } from "fs/promises";
 import path from "path";
+import os from "os";
 
-const DATA_DIR = path.join(process.cwd(), ".data");
+// Use OS temp directory so this works in serverless / read-only code dirs.
+// On most platforms (including AWS Lambda), this resolves to something like /tmp.
+const DATA_DIR = path.join(os.tmpdir(), "research-app-data");
 const FILE_PATH = path.join(DATA_DIR, "competitors.json");
 
 export type StoredCompetitor = {
