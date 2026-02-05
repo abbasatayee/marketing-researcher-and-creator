@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Button, Card, CardTitle } from "../../../../components/ui";
+import { Button, Card } from "../../../../components/ui";
 
 const POLL_INTERVAL_MS = 2500;
 const GIVE_UP_MS = 3 * 60 * 1000; // 3 minutes
@@ -107,7 +107,7 @@ export default function ContentWaitingPage() {
       </header>
 
       <Card className="flex flex-col items-center justify-center py-16">
-        <CardTitle className="sr-only">Loading</CardTitle>
+        <span className="sr-only">Loading</span>
         {!gaveUp ? (
           <>
             <div
